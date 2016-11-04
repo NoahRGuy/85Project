@@ -24,8 +24,8 @@ db.execute(create_table_cmd)
 #Update any aspect of a person's info in the database
 #Delete any person to the list when desired
 #IF you view a person's info and their birthday is today, you will get a snarky notification
-def create_new_info(db, name, age, birthday, preferences= "N/A")
-	db.execute("INSERT INTO birthdayInfo(name, age, birthday, preferences) VALUES (?, ?, ?, ?)", [name, age, birthday, preferences])
+def create_new_info(db, name, age, birthday, preferences)
+	db.execute("INSERT INTO birthdayInfo (name, age, birthday, preferences) VALUES (?, ?, ?, ?)", [name, age, birthday, preferences])
   db.execute("SELECT * FROM birthdayInfo")
 end
 
@@ -54,12 +54,13 @@ def view_info(db, id)
 end
 
 def view_all(db)
-  db.execute("SELECT * FROM birthdayInfo")
+  allInfo = db.execute("SELECT * FROM birthdayInfo")
+  allInfo.each do |info|
+    puts "ID No.: #{info['id']}   Name: #{info['name']}   Age: #{info['age']}   Birth Date: #{info['birthday']}   Preferences: #{info['preferences']}"
   end
 end
 
 def list_choices
-  puts "What would you like to do today? Please select from one of these options (Input the number of the option):"
   puts "1. Look at Birthday List"
   puts "2. Add to List"
   puts "3. Delete from List"
@@ -113,7 +114,7 @@ while input = gets.chomp
     birthday = gets.chomp
     puts "Gift preferences (if none, type N/A): "
     preferences = gets.chomp
-    create_new_info(name, age, birthday, preferences)
+    create_new_info(db, name, age, birthday, preferences)
     puts "Great! That person has been registered! Anything else?"
     list_choices
   when "3"
