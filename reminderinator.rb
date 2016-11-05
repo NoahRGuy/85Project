@@ -4,7 +4,7 @@ require 'date'
 db = SQLite3::Database.new("info.db")
 db.results_as_hash = true
 
-today = DateTime.now
+
 
 create_table_cmd = <<-SQL
   CREATE TABLE IF NOT EXISTS birthdayInfo (
@@ -79,18 +79,32 @@ end
 def display_names(db)
  info = db.execute("SELECT * FROM birthdayInfo")
  info.each do |inf|
-    puts "#{inf[id]}. #{inf['name']}"
-    count += 1
+    puts "#{inf['id']}. #{inf['name']}"
  end
 end
 
+def get_num_people(db)
+  count = 0
+  info = db.execute("SELECT * FROM birthdayInfo")
+  info.each do |inf|
+    count += 1
+  end
+  return count
+end
+
 def check_birthdays(db)
+  today = DateTime.now
+  birthdayToday = false
   info = db.execute("SELECT * FROM birthdayInfo")
   info.each do |inf|
     birthdayString = inf['birthday'].split("/")
     if(today.month.to_i == birthdayString[0].to_i && today.day.to_i == birthdayString[1].to_i)
       puts "#{inf['name']}\'s birthday is today! Did you remember?"
+      birthdayToday = true
     end
+  end
+  if !birthdayToday
+    puts "There's no birthdays today. Don't worry, you didn't forget anyone."
   end
 end
 
@@ -99,12 +113,12 @@ puts "What would you like to do today? Please select from one of these options (
 list_choices
 while input = gets.chomp
   case input
-  when "1"
+  when "1" #First Choice Displays all of the people and their corresponding information inside of the database
     puts "Here's all the people in the database so far:"
     view_all(db)
     puts "Anything else you'd like to do?"
     list_choices
-  when "2"
+  when "2" #Second Choice adds a new person and their info to the database
     puts "Please input the new person's information as follows: "
     puts "Name: "
     name = gets.chomp
@@ -117,9 +131,9 @@ while input = gets.chomp
     create_new_info(db, name, age, birthday, preferences)
     puts "Great! That person has been registered! Anything else?"
     list_choices
-  when "3"
+  when "3" #Third choice deletes a person's information from the database
     puts "Whose information would you like to delete? Please input the selected person's ID number."
-    display_names
+    display_names(db)
     begin
       chosen_id = gets.chomp
       chosen_id = Integer(chosen_id)
@@ -127,21 +141,21 @@ while input = gets.chomp
       print "Please enter an integer number."
       retry
     end
-    numPeople = db.execute("SELECT Count(*) FROM birthdayInfo").to_i
-    unless chosen_id > numPeople
+    numPeople = get_num_people(db)
+    unless chosen_id.to_i > numPeople
       delete_info(db, chosen_id)
     else
       print "Sorry, that input is invalid. Try again!"
     end
     puts "Is there anything else you'd like to do?"
     list_choices
-  when "4"
+  when "4" #Fourth Choice checks for any birthdays today
     check_birthdays(db)
     puts "Is there anything else you'd like to do?"
     list_choices
-  when "5"
+  when "5" #Fifth choice updates information
     puts "Whose information would you like to update? Please input the selected person's ID number."
-    display_names
+    display_names(db)
     begin
       chosen_id = gets.chomp
       chosen_id = Integer(chosen_id)
@@ -149,7 +163,7 @@ while input = gets.chomp
       print "Please enter an integer number."
       retry
     end
-    numPeople = db.execute("SELECT Count(*) FROM birthdayInfo").to_i
+    numPeople = get_num_people(db)
     unless chosen_id > numPeople
       puts "Which aspect of their info would you like to change? Please select the number of your choice."
       list_value_choices
@@ -183,7 +197,7 @@ while input = gets.chomp
     end
     puts "Anything else you'd like to do?"
     list_choices
-  when "6"
+  when "6" #6th choice terminates the program
     puts "Thank you for using the Reminderinator!"
     break
   else
